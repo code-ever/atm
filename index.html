@@ -289,6 +289,14 @@ pre.code{background:var(--surface);border:1px solid var(--line);border-radius:10
 .lock{border:2px dashed var(--line);border-radius:var(--r);padding:26px;text-align:center;color:var(--muted)}
 .lock .ic{width:34px;height:34px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* User-managed ATM photos */
+.photo-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.page-photo{margin:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.page-photo img{display:block;width:100%;height:clamp(220px,32vw,420px);object-fit:cover}
+.page-photo figcaption{padding:12px 15px;font-weight:700;font-size:.92rem}
+@media(max-width:640px){.photo-gallery{grid-template-columns:1fr}.page-photo img{height:auto;max-height:440px;object-fit:cover}}
+
 </style>
 <style>
 .hb{display:grid;gap:8px}.hbr{display:grid;grid-template-columns:minmax(80px,120px) 1fr 40px;gap:10px;align-items:center;font-size:.82rem}
@@ -315,6 +323,25 @@ pre.code{background:var(--surface);border:1px solid var(--line);border-radius:10
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 'use strict';
+
+/* ============================================================
+   EASY IMAGE SETTINGS
+   Keep image files beside index.html.
+   Add more images by copying an object and changing its fields.
+   ============================================================ */
+const PAGE_IMAGES = [
+  { src: 'IMG_5191.JPG', alt: 'ATM leadership engagement at a building entrance', label: 'Leadership Engagement' },
+  { src: 'IMG_5183.JPG', alt: 'ATM members gathered for a community meeting', label: 'Community Meeting' },
+  { src: 'IMG_5191.JPG', alt: 'ATM leadership and community members', label: 'Leadership and Community' },
+  { src: 'IMG_5183.JPG', alt: 'Community members attending an ATM meeting', label: 'Members in Attendance' }
+];
+const pagePhoto = (item) => `
+  <figure class="page-photo">
+    <img src="${esc(item.src)}" alt="${esc(item.alt)}" loading="lazy">
+    <figcaption>${esc(item.label)}</figcaption>
+  </figure>
+`;
+
 /* Standalone hosting shim: when not inside claude.ai, offer normal browser downloads */
 if(!window.claude){window.claude={use:async n=>n==='downloads'?{save:async({filename,data})=>{const b=data instanceof Blob?data:new Blob([data]);const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=filename;document.body.appendChild(a);a.click();a.remove();return{status:'saved'}}}:null}}
 /* ============ helpers ============ */
@@ -568,13 +595,14 @@ function pageHome(){const f=ARTS.find(a=>a.featured&&a.status==='Published')||pu
  <div class="grid">${rest.map(a=>`<a class="card lift" href="#article-${a.id}"><span class="badge">${esc(a.cat)}</span><h4 style="margin:8px 0 4px">${esc(a.title)}</h4><span class="small muted">${fmtD(a.date)}</span></a>`).join('')}</div></div></div></section>
  <section class="sec"><div class="wrap"><div class="sec-h"><div><div class="eyebrow">Events and activities</div><h2>Upcoming</h2></div><a class="btn btn-outline" href="#events">All events</a></div><div class="grid g3">${publicEvents().filter(e=>e.status!=='Completed').slice(0,3).map(evCard).join('')}</div></div></section>
  <section class="sec alt"><div class="wrap"><div class="sec-h"><div><div class="eyebrow">Leadership</div><h2>Approved officials</h2></div><a class="btn btn-outline" href="#leadership">Full directory</a></div><div class="grid g4">${L.map(leaderCard).join('')}</div></div></section>
+ <section class="sec"><div class="wrap"><div class="sec-h"><div><div class="eyebrow">ATM activities</div><h2>Leadership and community moments</h2><p class="muted">Photos from ATM engagements and meetings.</p></div></div><div class="photo-gallery">${PAGE_IMAGES.slice(0,2).map(pagePhoto).join('')}</div></div></section>
  <section class="sec"><div class="wrap"><div class="sec-h"><div><div class="eyebrow">Media gallery</div><h2>Moments from the field</h2></div><a class="btn btn-outline" href="#gallery">Open gallery</a></div><div class="grid g6">${MEDIA.slice(0,6).map(g=>ph(g.t,g.c,g.type==='video'?'video':'image')).join('')}</div></div></section>
  <section class="sec" style="padding-top:0"><div class="wrap"><div class="card" style="background:linear-gradient(135deg,var(--brand-900),var(--brand));color:#fff;border:0;padding:clamp(24px,5vw,48px)"><div class="split w3" style="align-items:center"><div><div class="eyebrow" style="color:var(--gold)">Join ATM</div><h2 style="margin-top:8px">Register in about three minutes</h2><p style="color:#D8EBE1">Tell us who you are, choose your LGA and ward, pick how you want to help, and confirm your consent. An administrator reviews your application before your digital card is issued.</p><a class="btn btn-gold" href="#join">Register as a Member ${ic('arrow')}</a></div><ol style="margin:0;padding-left:20px;color:#E3F0E9;display:grid;gap:8px"><li>Enter your details</li><li>Select your LGA, ward and polling unit</li><li>Choose a membership category</li><li>Give consent and submit</li><li>Receive your member ID</li></ol></div></div></div></section>`}
 function evCard(e){const d=new Date(e.date);return `<a class="card lift" href="#event-${e.id}"><div class="evrow"><div class="datebox"><b>${d.getDate()}</b><span>${MON[d.getMonth()]}</span></div><div style="min-width:0"><div class="row" style="gap:6px">${badge(e.status)}</div><h4 style="margin:6px 0 4px">${esc(e.title)}</h4><p class="small muted" style="margin:0">${ic('pin')} ${esc(e.venue)}</p></div></div></a>`}
 function leaderCard(l){return `<a class="card lift" href="#leader-${l.id}"><div class="person"><div class="avatar">${initials(l.name.startsWith('[')?l.pos:l.name)}</div><div style="min-width:0"><h4 style="margin:0">${esc(l.name)}</h4><div class="small">${esc(l.pos)}</div><div class="tiny muted">${esc(l.geo)}</div></div></div></a>`}
 
 /* ============ about / leadership ============ */
-function pageAbout(){return phead('About ATM','As Tinubu and Mbah Move is a grassroots movement organised across Enugu State.',[['Home','#home'],['About ATM']],'About')+`<div class="wrap page"><div class="split"><div><h2>Who we are</h2><p>ATM stands for <b>As Tinubu and Mbah Move</b>. It is an organised, member-led movement with a presence in every LGA, ward and polling unit of Enugu State.</p><p class="muted small">${demoTag('Placeholder copy')} Replace with the approved ATM mission and history.</p><h3>What we do</h3><ul><li>Register and organise supporters.</li><li>Appoint and support coordinators at each level.</li><li>Share approved news and events.</li><li>Report activities transparently inside the structure.</li></ul></div>${ph('Community meeting photo','p1','image','4/3')}</div>
+function pageAbout(){return phead('About ATM','As Tinubu and Mbah Move is a grassroots movement organised across Enugu State.',[['Home','#home'],['About ATM']],'About')+`<div class="wrap page"><div class="split"><div><h2>Who we are</h2><p>ATM stands for <b>As Tinubu and Mbah Move</b>. It is an organised, member-led movement with a presence in every LGA, ward and polling unit of Enugu State.</p><p class="muted small">${demoTag('Placeholder copy')} Replace with the approved ATM mission and history.</p><h3>What we do</h3><ul><li>Register and organise supporters.</li><li>Appoint and support coordinators at each level.</li><li>Share approved news and events.</li><li>Report activities transparently inside the structure.</li></ul></div><div class="photo-gallery">${PAGE_IMAGES.slice(0,2).map(pagePhoto).join('')}</div></div>
  <h2 style="margin-top:40px">How ATM is organised</h2><div class="split"><div class="hier"><div style="--i:0">State Administrator<small>Enugu State</small></div><div style="--i:1">LGA Coordinator<small>17 LGAs</small></div><div style="--i:2">Ward Coordinator<small>Electoral wards (registration areas)</small></div><div style="--i:3">Polling-Unit Coordinator<small>Polling units</small></div><div style="--i:4">Registered members</div></div>
  <div class="card"><h3>Principles</h3><ul class="small"><li><b>Approval, not self-appointment.</b> Coordinator roles are nominated and approved.</li><li><b>Privacy first.</b> We collect only what is needed and never publish member records.</li><li><b>Separate from INEC.</b> ATM membership is not voter registration.</li><li><b>Accountable.</b> Privileged actions are recorded in an audit log.</li></ul></div></div>
  <h2 style="margin-top:40px">Frequently asked questions</h2><div class="faq" style="max-width:800px"><details><summary>Is ATM membership the same as voter registration?</summary><p>No. Use official INEC services to register as a voter or confirm your polling unit.</p></details><details><summary>Do I need my PVC number?</summary><p>No. ATM does not ask for PVC numbers, biometric data or government ID.</p></details><details><summary>Can I choose to be a coordinator?</summary><p>You can apply. Applications are reviewed and approved by an administrator. Until then you are registered as a general member.</p></details><details><summary>Who can see my details?</summary><p>Only authorised ATM officials within your area, on a need-to-know basis. Nothing is published.</p></details></div></div>`}
